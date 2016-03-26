@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+# Automatically added by dh_installdocs
+if [ "$1" = "configure" ]; then
+	if [ -d /usr/doc -a ! -e /usr/doc/musepack-decoder-i386 -a -d /usr/share/doc/musepack-decoder-i386 ]; then
+		ln -sf ../share/doc/musepack-decoder-i386 /usr/doc/musepack-decoder-i386
+	fi
+fi
+# End automatically added section

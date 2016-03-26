@@ -1,0 +1,22 @@
+Source: musepack
+Section: sound
+Priority: optional
+Maintainer: mike gan <xmixahlx@yahoo.com>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.0
+
+Package: musepack-encoder
+Architecture: any
+Depends: ${shlibs:Depends}
+Provides: musepack-encoder
+Description: high quality lossy audio codec - encoder
+ Musepack Stream Version 7 (~ Pre-SV8) lossy audio codec.
+ encoder package.
+
+Package: musepack-decoder
+Architecture: any
+Depends: ${shlibs:Depends}
+Provides: musepack-decoder
+Description: high quality lossy audio codec - decoder
+ Musepack Stream Version 7 lossy audio codec
+ decoder package.

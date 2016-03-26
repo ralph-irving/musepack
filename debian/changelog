@@ -1,0 +1,11 @@
+musepack (7.1.95z67-2) unstable; urgency=low
+
+  * Generic i386 compile against the woody branch.
+
+ -- Jimmy Tang <vinks@esatclear.ie>  Mon, 20 Oct 2003 21:56:44 +0000
+
+musepack (7.1.95z67-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- mike gan <xmixahlx@yahoo.com>  Mon, 29 Sep 2003 09:33:55 -0700

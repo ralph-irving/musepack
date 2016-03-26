@@ -1,0 +1,14 @@
+Package: musepack-encoder-i386
+Version: 7.1.95z67-1
+Section: sound
+Priority: optional
+Architecture: i386
+Conflicts: musepack-encoder-k7 musepack-encoder-686
+Replaces: musepack-encoder-k7 musepack-encoder-686
+Provides: musepack-encoder
+Installed-Size: 44
+Maintainer: mike gan <xmixahlx@yahoo.com>
+Source: musepack
+Description: high quality lossy audio codec - encoder
+ Musepack Stream Version 7 (~ Pre-SV8) lossy audio codec.
+ encoder package.

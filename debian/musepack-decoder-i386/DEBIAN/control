@@ -1,0 +1,14 @@
+Package: musepack-decoder-i386
+Version: 7.1.95z67-1
+Section: sound
+Priority: optional
+Architecture: i386
+Conflicts: musepack-decoder-k7 musepack-decoder-686
+Replaces: musepack-decoder-k7 musepack-decoder-686
+Provides: musepack-decoder
+Installed-Size: 40
+Maintainer: mike gan <xmixahlx@yahoo.com>
+Source: musepack
+Description: high quality lossy audio codec - decoder
+ Musepack Stream Version 7 lossy audio codec
+ decoder package.
