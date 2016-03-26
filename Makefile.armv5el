@@ -24,7 +24,7 @@ CC3      = gcc-3.0 -pipe -L/lib
 
 ifdef ARCH
 else
-ARCH     = -march=armv6j -mtune=arm1136jf-s
+ARCH     = -march=armv5te
 endif
 
 
