@@ -8,19 +8,19 @@
 // use optimized assembler routines for Pentium III/K6-2/Athlon (only 32 bit OS, Intel x86 and no MAKE_xxBITS)
 // you need the NASM assembler on your system, the program becomes a little bit larger and decoding
 // on AMD K6-2 (x3), AMD K6-III (x3), AMD Duron (x1.7), AMD Athlon (x1.7), Pentium III (x2) and Pentium 4 (x1.8) becomes faster
-#define USE_ASM
+// #define USE_ASM
 
 // Open Sound System support (only Unix with OSS support)
 // If your Operating System supports the Open Sound System, you can output to /dev/dsp* and
 // instead of writing a file the program plays the file via this sound device.
 // on some systems you also must link the libossaudio library, so maybe you also must edit the Makefile
-#define USE_OSS_AUDIO
+// #define USE_OSS_AUDIO
 
 // Enlightenment Sound Daemon support (only Unix with ESD support)
 // If your Operating System supports the Enlightenment Sound Daemon you can output to /dev/esd and
 // instead of writing a file the program plays the file via this sound device.
 // you also must link the libesd library, so maybe you also must edit the Makefile
-#define USE_ESD_AUDIO
+// #define USE_ESD_AUDIO
 
 // native Sun Onboard-Audio support (only SunOS)
 // If you have a Sun Workstation with Onboard-Audio, you can output to /dev/audio and
@@ -37,7 +37,7 @@
 // Audio support for Windows (WAVE OUT) (only Windows)
 // If you have a Windows based system and if you want also play files directly instead of only writing audio files,
 // then define the next item
-#define USE_WIN_AUDIO
+// #define USE_WIN_AUDIO
 
 // Buffersize for Windows Audio in 4.5 KByte units
 // Only needed for Windows+USE_WIN_AUDIO
