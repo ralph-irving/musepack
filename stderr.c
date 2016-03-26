@@ -25,7 +25,7 @@
 #endif
 
 
-static Bool_t  stderr_silent = 0;
+Bool_t  stderr_silent = 0;
 
 
 void

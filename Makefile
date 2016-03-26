@@ -15,7 +15,7 @@ DESTDIR=`pwd`/debian/tmp
 
 # Select the compiler. Normally gcc is used.
 
-CC       = gcc-3.0 -pipe -L/lib
+CC       = gcc -pipe -L/lib
 CC3      = gcc-3.0 -pipe -L/lib
 
 
@@ -83,7 +83,7 @@ LOGFILE  = /dev/tty
 # Name of libraries you need for linking
 
 LDADD    = -lm
-LDADD   += -lesd
+#LDADD   += -lesd
 #LDADD  += -lossaudio
 #LDADD  += -lrt
 #LDADD  += -lsocket -lnsl
@@ -139,27 +139,25 @@ STRIPOPT = --remove-section .comment --remove-section .note.ABI-tag --remove-sec
 OPTIM_SPEED = \
 	-O3 -s                  \
 	-finline-functions      \
-	-mno-ieee-fp            \
 	-ffast-math             \
 	-fomit-frame-pointer    \
 	-frerun-loop-opt        \
 	-fstrength-reduce       \
 	-fexpensive-optimizations \
-	-funroll-all-loops -fmove-all-movables -fstrength-reduce \
-	-mpreferred-stack-boundary=2 -malign-jumps=5 -malign-loops=0 -malign-functions=5
+	-funroll-all-loops	\
+	-fstrength-reduce
 
 # -fcse-follow-jumps \
 
 
 OPTIM_SIZE = \
 	-Os -s                  \
-	-mno-ieee-fp            \
 	-ffast-math             \
 	-fomit-frame-pointer    \
 	-frerun-loop-opt        \
 	-fstrength-reduce       \
-	-fmove-all-movables -fstrength-reduce -fcse-follow-jumps \
-	-mpreferred-stack-boundary=2 -malign-jumps=5 -malign-loops=0 -malign-functions=5
+	-fstrength-reduce	\
+	-fcse-follow-jumps
 
 # Options to generate Assembly code for inspecting
 
@@ -169,7 +167,7 @@ ASSEM = -S -fverbose-asm
 # Some remaining possible options (time measurement and debugging)
 
 #PROFILE = -DPROFILE
-#DEBUG   = -DNDEBUG
+DEBUG   = -DNDEBUG
 
 
 #
@@ -228,9 +226,9 @@ OTHER_DEPEND_ENC = $(OTHER_DEPEND_DEC) mppenc.h minimax.h
 
 # Lists of object and C files
 
-MPPDEC_OBJ = cpu_feat.o decode.o http.o huffsv7.o huffsv46.o id3tag.o mppdec.o profile.o requant.o synth.o synthasm.o synthtab.o tools.o wave_out.o stderr.o _setargv.o codetable_data.o codetable.o codetable_dec.o priority.o directory.o 
+MPPDEC_OBJ = decode.o http.o huffsv7.o huffsv46.o id3tag.o mppdec.o profile.o requant.o synth.o synthtab.o tools.o wave_out.o stderr.o _setargv.o codetable_data.o codetable.o codetable_dec.o priority.o directory.o 
 MPPDEC_SRC =            decode.c http.c huffsv7.c huffsv46.c id3tag.c mppdec.c profile.c requant.c synth.c            synthtab.c tools.c wave_out.c stderr.c _setargv.c codetable_data.c codetable.c codetable_dec.c priority.c directory.c
-MPPDEC_ASO = cpu_feat.o                                                                                    synthasm.o                                                                                                                      
+MPPDEC_ASO =
 
 
 MPPENC_OBJ = subband.o ans.o bitstream.o cvd.o fft4g.o fft4gasm.o fft_routines.o mppenc.o profile.o psy.o psy_tab.o quant.o encode_sv7.o wave_in.o tags.o fastmath.o pipeopen.o stderr.o codetable_data.o codetable.o codetable_enc.o keyboard.o priority.o fpu.o directory.o codetablemake.o
