@@ -163,7 +163,7 @@
 # endif
 #endif
 
-#if   defined USE_WIN_AUDIO
+#if   defined USE_WIN_AUDIO || defined __MINGW32__
 # include <windows.h>
 # define WINAUDIO_FD            ((FILE_T)-128)
 #elif defined USE_IRIX_AUDIO

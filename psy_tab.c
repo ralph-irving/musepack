@@ -215,7 +215,7 @@ ATHSetup ( float         fs,
     }
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) && ! defined (__MINGW32__)
 static double
 asinh ( double x )
 {

@@ -1,0 +1,704 @@
+#
+#  Makefile for mppdec/mppenc for gcc
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+include version
+
+
+# Name of this Makefile
+
+MAKEFILE = Makefile
+
+# DEBIAN DESTDIR
+
+DESTDIR=`pwd`/debian/tmp
+
+# Select the compiler. Normally gcc is used.
+
+CC       = gcc -pipe -L/lib
+CC3      = gcc-3.0 -pipe -L/lib
+
+
+# Select architecture and CPU type with the variable $(ARCH).
+# If unset Intel 386 with optimization for Pentium is selected.
+
+
+
+# Paths of several test files for testing
+# You don't need them for simple compiling
+
+TEST1    = /Archive/Audio/technik/mpc/SV4test.mpc
+TEST2    = /Archive/Audio/technik/mpc/SV5test.mpc
+TEST3    = /Archive/Audio/technik/mpc/SV6test.mpc
+TEST4    = /Archive/Audio/technik/mpc/SV7test.mpc
+TEST5    = '/Archive/Audio/Fury in the Slaughterhouse/Mono -- [02] Generation got its own disease.pac'
+TEST6    = /tmp/1.wav
+TEST7    = G1.mpc
+TEST8    = G2.mpc
+TEST9    = /Archive/1.mpc
+TEST10   = /Archive/CD.mpc
+TEST11   = /tmp/1.wav
+TEST12   = /tmp/2.wav
+
+DATE     = `date '+%Y-%m-%d_%H-%M-%S'`
+TMPFILE  = /tmp/tmpfile-mpp-$(DATE)-`hostname -f``tty|sed 's,/,-,g'`
+
+
+# Prioriry used for testing. This should reduce effects of other programs
+# while running the benchmark tests. Set to -20 if you are root, 0 otherwise
+
+NICE     = nice -n -20
+
+
+# Names of several tools
+
+RM_F     = rm -f --
+RM_RF    = rm -rf --
+CP_F     = cp -f --
+MV_F     = mv -f --
+STRIP    = strip
+CHOWN    = chown
+CHMOD    = chmod
+MKDIR    = mkdir
+CLS      = clear
+CAT      = cat
+LPAC     = lpac
+ZIP      = zip -9
+BZIP2    = bzip2 -9
+PGP      = pgp
+TAR      = tar
+LESS     = more
+ENCODE   = uuencode
+MAIL     = mail
+DEVNULL  = /dev/null
+LOGFILE  = /dev/tty
+#LOGFILE = logfile
+
+
+# Name of libraries you need for linking
+
+LDADD    = -lm
+LDADD   += -lws2_32
+#LDADD  += -lossaudio
+#LDADD  += -lrt
+#LDADD  += -lsocket -lnsl
+
+
+# Directory for object files
+
+OBJDIR = ./o
+
+
+# Path of additional includes and libs
+
+XINCLDIR = /usr/local/include
+XLIBDIR  = /usr/local/lib
+
+
+# Warning options, unset if the compiler makes trouble because of unknown
+# options
+
+WARN  = \
+	-Wall                   \
+	-pedantic               \
+	-W                      \
+	-Wshadow                \
+	-Wbad-function-cast     \
+	-Wcast-align            \
+	-Wwrite-strings         \
+	-Wconversion            \
+	-Wsign-compare          \
+	-Wstrict-prototypes     \
+	-Wmissing-prototypes    \
+	-Wmissing-declarations  \
+	-Wnested-externs        \
+	-Wno-long-long          \
+	-Wno-traditional	\
+
+
+# Feature select for different optimization versions
+
+#FEATURE += -DUSE_WIN_AUDIO
+#FEATURE += -DEXTRA_DECONV
+#FEATURE += -DFASTER
+
+
+# Options for $(STRIP)
+
+STRIPOPT = --remove-section .comment --remove-section .note.ABI-tag --remove-section .note --remove-section .gnu.warning.llseek --remove-section .gnu.version
+
+
+# Die Zielvariante zum Ausliefern sollte nur 'OPTIM=-O3' und 'WARN=' enthalten,
+# damit das Programm überall (alle CPUs, OS und Compiler) übersetzbar ist.
+
+OPTIM_SPEED = \
+	-O3 -s                  \
+	-finline-functions      \
+	-ffast-math             \
+	-fomit-frame-pointer    \
+	-frerun-loop-opt        \
+	-fstrength-reduce       \
+	-fexpensive-optimizations \
+	-funroll-all-loops	\
+	-fstrength-reduce
+
+# -fcse-follow-jumps \
+
+
+OPTIM_SIZE = \
+	-Os -s                  \
+	-ffast-math             \
+	-fomit-frame-pointer    \
+	-frerun-loop-opt        \
+	-fstrength-reduce       \
+	-fstrength-reduce	\
+	-fcse-follow-jumps
+
+# Options to generate Assembly code for inspecting
+
+ASSEM = -S -fverbose-asm
+
+
+# Some remaining possible options (time measurement and debugging)
+
+#PROFILE = -DPROFILE
+DEBUG   = -DNDEBUG
+
+
+#
+# Overwrite problematic options which can't be understand by all compilers
+#
+
+ifdef USE_GCC272
+ARCH        =
+FEATURE     =
+WARN        =
+PROFILE     =
+DEBUG       =
+XINCLDIR    =
+XLIBDIR     =
+ASSEM       =
+OPTIM_SPEED =
+OPTIM_SIZE  =
+endif
+
+
+# Merge all options together for CFLAGS and CFLAG_SIZE
+
+CFLAGS        = $(ARCH) $(FEATURE) $(WARN) $(PROFILE) $(DEBUG) -DMAKE_$(BITS)BIT -DMPPDEC_VERSION=\"$(MPPDEC_VERSION)\" -DMPPENC_VERSION=\"$(MPPENC_VERSION)\"
+CFLAGS       += -I$(XINCLDIR) -L$(XLIBDIR)
+#CFLAGS      += $(ASSEM)
+CFLAGS_SIZE   = $(CFLAGS) $(OPTIM_SIZE)
+CFLAGS       += $(OPTIM_SPEED)
+
+
+# Name and Options for NASM, the Netwide Assembler
+
+NASM          = nasm
+NASMFLAGS     = -f elf
+
+
+# Another optimization for the Pentium Classic (60...200 MHz) and Pentium MMX (166...233 MHz)
+
+ifdef PENTIUM
+NASMFLAGS    += -DUSE_FXCH
+endif
+
+
+# Targets and general dependencies
+
+MPPDEC_TARGET    = mppdec
+MPPENC_TARGET    = mppenc
+STREAM_TARGET    = streamserver
+REPLAY_TARGET    = replaygain
+CLIPSTAT_TARGET  = clipstat
+TAGGER_TARGET    = tagger
+ALL_TARGETS      = $(MPPDEC_TARGET) $(MPPENC_TARGET)
+OTHER_DEPEND_ASM = $(MAKEFILE) tools.inc version
+OTHER_DEPEND_DEC = $(MAKEFILE) mppdec.h mpp.h config.h profile.h version
+OTHER_DEPEND_ENC = $(OTHER_DEPEND_DEC) mppenc.h minimax.h
+
+
+# Lists of object and C files
+
+MPPDEC_OBJ = decode.o http.o huffsv7.o huffsv46.o id3tag.o mppdec.o profile.o requant.o synth.o synthtab.o tools.o wave_out.o stderr.o _setargv.o codetable_data.o codetable.o codetable_dec.o priority.o directory.o 
+MPPDEC_SRC =            decode.c http.c huffsv7.c huffsv46.c id3tag.c mppdec.c profile.c requant.c synth.c            synthtab.c tools.c wave_out.c stderr.c _setargv.c codetable_data.c codetable.c codetable_dec.c priority.c directory.c
+MPPDEC_ASO =
+
+
+MPPENC_OBJ = subband.o ans.o bitstream.o cvd.o fft4g.o fft4gasm.o fft_routines.o mppenc.o profile.o psy.o psy_tab.o quant.o encode_sv7.o wave_in.o tags.o fastmath.o pipeopen.o stderr.o codetable_data.o codetable.o codetable_enc.o keyboard.o priority.o fpu.o directory.o codetablemake.o
+MPPENC_SRC = subband.c ans.c bitstream.c cvd.c fft4g.c            fft_routines.c mppenc.c profile.c psy.c psy_tab.c quant.c encode_sv7.c wave_in.c tags.c fastmath.c pipeopen.c stderr.c codetable_data.c codetable.c codetable_enc.c keyboard.c priority.c fpu.c directory.c codetablemake.c
+MPPENC_ASO =                                           fft4gasm.o                                                                                                                                                                                                             
+
+
+REPLAY_OBJ = replaygain.o gain_analysis.o pipeopen.o stderr.o _setargv.o
+REPLAY_SRC = replaygain.c gain_analysis.c pipeopen.c stderr.c _setargv.c
+REPLAY_ASO =
+
+
+CLIPSTAT_OBJ = clipstat.o pipeopen.o stderr.o
+CLIPSTAT_SRC = clipstat.c pipeopen.c stderr.c
+CLIPSTAT_ASO =
+
+
+# Files for source packages
+
+MPPDEC_PACKAGE = $(MPPDEC_SRC) AUTHORS CHANGES COPYING.LGPL ChangeLog INSTALL NEWS README SV7.txt MANUAL.TXT SHOWDIFFS version *.mak streamserver.c HowToRea.txt $(MAKEFILE) config.c config.dsp streamserver.dsp udp_server_client.c msr.h cpu_feat.nas dump.c mppdec.dsp mpp.dsw mpp.h mpp.prj mppdec.h profile.h synthasm.nas tools.inc replaygain.c replaygain.dsp gain_analysis.[ch] pipeopen.[ch] _setargv.c name.c name.dsp codetable* 
+MPPENC_PACKAGE = $(MPPENC_SRC) TODO minimax.h mppenc.dsp mppenc.h fastmath.h winmsg.c A-*.txt fft4gasm.nas predict.h
+WINAMP_PACKAGE = COPYING.LGPL winamp/README_mpc-plugin_*.txt winamp/TODO winamp/bitstream.[ch] winamp/huffsv7.[ch] winamp/huffsv46.[ch] winamp/idtag.[ch] winamp/in_mpc.{c,h,dsp,dsw} winamp/language.h winamp/minimax.h winamp/mpc_dec.[ch] winamp/requant.[ch] winamp/resource.{h,hm} winamp/synth_filter.[ch] winamp/tag.rc winamp/{colorbar,logo}*.bmp winamp/{in2,out}.h winamp/*korean.* winamp/INFO.txt winamp/unipoop.h
+XMMS_PACKAGE   = COPYING.LGPL xmms/ChangeLog xmms/in_mpc.c xmms/Makefile xmms/README_mpc-plugin_*.txt xmms/bitstream.[ch] xmms/huffsv{46,7}.[ch] xmms/minimax.h xmms/mpc_dec.[ch] xmms/mpplus_blue.xpm xmms/requant.[ch] xmms/synth_filter.[ch] xmms/xmms-musepack.spec xmms/xmms.dsp
+
+
+# may be megabytes of Trash
+
+TRASH       = ./*.o ./*.obj ./*.lst {$(MPPDEC_TARGET),$(MPPENC_TARGET)}{,-static,-diet} $(STREAM_TARGET) a.out ./*.da ./*.s $(REPLAY_TARGET)
+AUX_TRASH   = ./*~ ./*/*~ ./*.bak ./.*~ DEADJOE mpp.lib config.h config .logging website/{*~,*/*~} report-*.txt .{,/*}/{Release,Debug}/*.{obj,pch,pdb,sbr,ilk,idb,exp,res} ./*.{plg,ncb,opt}
+BACKUP_EXCL = *.mpc website/audio/* website/audio2/* website/audio3/* website/bin/* website/img/* i/* mpp{enc,dec}-[0-9].[0-9][0-9][a-z]/* rfc*.txt.bz2
+
+
+# Broadcast destinations
+
+BROADCAST_MPPDEC = busch piecha pfk zeiss case@mobiili.net steve.lhomme@free.fr Nicolaus.Berglmeir@t-online.de
+BROADCAST_MPPENC = Andree.Buschmann@web.de patrick.piecha@micronas.com pfk f.klemm@zeiss.de Nicolaus.Berglmeir@t-online.de
+
+
+########################################################################################
+#
+# Compile source packages
+
+all:    $(ALL_TARGETS)
+
+
+$(MPPDEC_TARGET): $(MPPDEC_OBJ)
+	$(CC)         $(CFLAGS) $(MPPDEC_OBJ) -o $(MPPDEC_TARGET)        $(LDADD)
+	-$(STRIP)     $(STRIPOPT)                $(MPPDEC_TARGET)
+
+$(MPPDEC_TARGET)16: $(MPPDEC_OBJ)
+	make clean
+	BITS=16 make mppdec
+	$(MV_F) mppdec mppdec16
+	$(MV_F) mppdec-static mppdec16-static
+
+
+$(MPPDEC_TARGET)24: $(MPPDEC_OBJ)
+	make clean
+	BITS=24 make mppdec
+	$(MV_F) mppdec mppdec24
+	$(MV_F) mppdec-static mppdec24-static
+
+
+$(MPPDEC_TARGET)32: $(MPPDEC_OBJ)
+	make clean
+	BITS=32 make mppdec
+	$(MV_F) mppdec mppdec32
+	$(MV_F) mppdec-static mppdec32-static
+
+
+$(MPPENC_TARGET): $(MPPENC_OBJ)
+	$(CC)         $(CFLAGS) $(MPPENC_OBJ) -o $(MPPENC_TARGET)        $(LDADD)
+	-$(STRIP)     $(STRIPOPT)                $(MPPENC_TARGET)
+
+$(MPPDEC_TARGET)-profiling: $(MPPDEC_OBJ)
+	$(CC3) -c      $(CFLAGS) $(CSRC)                            -fprofile-arcs         $(LDADD)
+	$(CC3)         $(CFLAGS) $(OBJ)  -o $(MPPDEC_TARGET)        -fprofile-arcs         $(LDADD)
+	make
+	make speed2
+	$(CC3) -c      $(CFLAGS) $(CSRC)                            -fprofile-arcs         $(LDADD)
+	$(CC3)         $(CFLAGS) $(OBJ)  -o $(MPPDEC_TARGET)        -fbranch-probabilities $(LDADD)
+	$(CC3) -static $(CFLAGS) $(OBJ)  -o $(MPPDEC_TARGET)-static -fbranch-probabilities $(LDADD)
+
+
+$(MPPDEC_TARGET)-diet:   $(MPPDEC_ASO) config.h
+	diet $(CC) $(CFLAGS) -DUSE_DIET -DNDEBUG $(MPPDEC_SRC) $(MPPDEC_ASO) -o $(MPPDEC_TARGET)-diet
+	elftrunc $(MPPDEC_TARGET)-diet $(MPPDEC_TARGET)-diet
+
+
+$(MPPENC_TARGET)-diet:   $(MPPENC_ASO) config.h
+	diet $(CC) $(CFLAGS) -DUSE_DIET -DNDEBUG $(MPPENC_SRC) $(MPPENC_ASO) -o $(MPPENC_TARGET)-diet
+	elftrunc $(MPPENC_TARGET)-diet $(MPPENC_TARGET)-diet
+
+
+$(STREAM_TARGET):
+	$(CC) -DMPP_DECODER $(CFLAGS) -o $(STREAM_TARGET) $(STREAM_TARGET).c
+	-$(STRIP)     $(STRIPOPT)           $(STREAM_TARGET)
+
+
+$(REPLAY_TARGET): $(REPLAY_OBJ) mpp.h config.c
+	$(CC) $(CFLAGS) $(REPLAY_OBJ) -o $(REPLAY_TARGET)      $(LDADD)
+	-$(STRIP)     $(STRIPOPT)           $(REPLAY_TARGET)
+
+
+$(TAGGER_TARGET):
+	$(CC) -DMPP_DECODER $(CFLAGS) -o $(TAGGER_TARGET) $(TAGGER_TARGET).c
+	-$(STRIP)     $(STRIPOPT)           $(TAGGER_TARGET)
+
+
+$(CLIPSTAT_TARGET):
+	$(CC)         $(CFLAGS) $(CLIPSTAT_OBJ) -o $(CLIPSTAT_TARGET)  $(LDADD)
+	-$(STRIP)     $(STRIPOPT)           $(CLIPSTAT_TARGET)
+
+
+###########################################################################################
+#
+# Compile mppdec source code files
+
+config.h: mpp.h config.c
+	$(CC) -DMPP_DECODER $(CFLAGS) -o config config.c   $(LDADD) &> $(LOGFILE)
+	@$(RM_F) config.h
+	@./config "$(CC) $(CFLAGS) -o <<EXE>> <<SRC>> $(LDADD)" "./<<EXE>>"
+	@$(RM_F) config
+
+
+decode.o:   $(OTHER_DEPEND_DEC) dump.c
+	$(CC) -c -DMPP_DECODER $(CFLAGS) decode.c
+
+http.o:     $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS) http.c
+
+huffsv7.o: $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS_SIZE) huffsv7.c
+
+huffsv46.o: $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS_SIZE) huffsv46.c
+
+id3tag.o:   $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS_SIZE) id3tag.c
+
+mppdec.o:   $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS) mppdec.c
+
+profile.o:  $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS) profile.c
+
+requant.o:  $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS_SIZE) requant.c
+
+synth.o:    $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS) -fno-omit-frame-pointer -O synth.c
+
+synthtab.o: $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS) synthtab.c
+
+tools.o:    $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS) tools.c
+
+wave_out.o: $(OTHER_DEPEND_DEC)
+	$(CC) -c -DMPP_DECODER $(CFLAGS) wave_out.c
+
+codetable_dec.o:    $(OTHER_DEPEND_DEC)
+	$(CC) -c -c $(CFLAGS) -DMPP_DECODER codetable_dec.c
+
+synthasm.o: $(OTHER_DEPEND_ASM) synthasm.nas
+	$(RM_F) synthasm.lst
+	$(NASM) $(NASMFLAGS) synthasm.nas -o synthasm.o -l synthasm.lst
+
+cpu_feat.o: $(OTHER_DEPEND_ASM) cpu_feat.nas
+	$(RM_F) cpu_feat.lst
+	$(NASM) $(NASMFLAGS) cpu_feat.nas -o cpu_feat.o -l cpu_feat.lst
+
+
+################################################################################
+#
+# Compile mppenc source code files
+
+directory.o:      $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER directory.c
+
+fpu.o:      	$(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER fpu.c
+
+keyboard.o:      $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER keyboard.c
+
+priority.o:      $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER priority.c
+
+wave_in.o:      $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER wave_in.c
+
+psy.o:          $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER psy.c
+
+ans.o:          $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER ans.c
+
+cvd.o:          $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER cvd.c
+
+encode_sv7.o:   $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER encode_sv7.c
+
+bitstream.o:    $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER bitstream.c
+
+subband.o: $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER subband.c
+
+quant.o:        $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER quant.c
+
+fft4g.o:        $(OTHER_DEPEND_ENC) fft4g.c
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER -fno-omit-frame-pointer -O fft4g.c
+
+fft4gasm.o:     $(OTHER_DEPEND_ASM) fft4gasm.nas
+	$(NASM) $(NASMFLAGS) fft4gasm.nas -o fft4gasm.o -l fft4gasm.lst
+
+fft_routines.o: $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER fft_routines.c
+
+psy_tab.o:      $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER psy_tab.c
+
+mppenc.o:       $(OTHER_DEPEND_ENC)
+	$(CC) -c $(CFLAGS) -DMPP_ENCODER mppenc.c
+
+tags.o:    $(OTHER_DEPEND_ENC)
+	$(CC) -o tags.o -c $(CFLAGS) -DMPP_ENCODER tags.c
+
+codetable_data.o:    $(OTHER_DEPEND_ENC)
+	$(CC) -o codetable_data.o -c $(CFLAGS) -DMPP_ENCODER codetable_data.c
+
+codetable_enc.o:    $(OTHER_DEPEND_ENC)
+	$(CC) -o codetable_enc.o -c $(CFLAGS) -DMPP_ENCODER codetable_enc.c
+
+codetable.o:    $(OTHER_DEPEND_ENC)
+	$(CC) -o codetable.o -c $(CFLAGS) -DMPP_ENCODER codetable.c
+
+codetablemake.o:    $(OTHER_DEPEND_ENC)
+	$(CC) -o codetablemake.o -c $(CFLAGS) -DMPP_ENCODER codetablemake.c
+
+
+
+################################################################################
+#
+# Compile replaygain source code files
+
+replaygain.o:
+	$(CC) -c $(CFLAGS) -DMPP_DECODER replaygain.c
+
+gain_analysis.o:
+	$(CC) -c $(CFLAGS) -DMPP_DECODER gain_analysis.c
+
+pipeopen.o:
+	$(CC) -c $(CFLAGS_SIZE) -DMPP_DECODER pipeopen.c
+
+stderr.o:
+	$(CC) -c $(CFLAGS_SIZE) -DMPP_DECODER stderr.c
+
+fastmath.o:
+	$(CC) -c $(CFLAGS_SIZE) -DMPP_ENCODER fastmath.c
+
+clipstat.o:
+	$(CC) -c $(CFLAGS_SIZE) -DMPP_DECODER clipstat.c
+
+_setargv.o:
+	$(CC) -c $(CFLAGS_SIZE) -DMPP_DECODER _setargv.c
+
+####################################################################################
+
+list:	list.o pipeopen.o _setargv.o stderr.o
+	$(CC) $(CFLAGS_SIZE) -DMPP_ENCODER -o list list.o pipeopen.o _setargv.o stderr.o -lm
+
+list.o:	list.c
+	$(CC) -c $(CFLAGS_SIZE) -DMPP_ENCODER list.c
+
+
+###############################################################################################
+#
+# Cleaning and removing unnecessary files
+
+clean:
+	@$(RM_F) $(TRASH)
+
+
+mrproper:
+	@$(RM_F) $(TRASH) $(AUX_TRASH)
+
+
+###############################################################################################
+#
+# Speed tests and function tests
+
+speedd1:
+	@$(CAT)  "$(TEST9)" "$(MPPDEC_TARGET)" > $(DEVNULL)
+	@$(CAT)  "$(TEST9)" "$(MPPDEC_TARGET)" > $(DEVNULL)
+	@$(NICE) time ./mppdec       "$(TEST9)"  $(DEVNULL)
+	@$(NICE) ../decorig/mppdec   "$(TEST9)"  $(DEVNULL)
+
+
+speedd2:
+	@$(CAT)  "$(TEST10)" "$(MPPDEC_TARGET)"   > $(DEVNULL)
+	@$(CAT)  "$(TEST10)" "$(MPPDEC_TARGET)"   > $(DEVNULL)
+	@$(NICE) time ./mppdec          "$(TEST10)" $(DEVNULL)
+	@$(NICE) time ./mppdec          "$(TEST10)" $(DEVNULL)
+	@$(NICE) time ../decorig/mppdec "$(TEST10)" $(DEVNULL)
+
+
+testd1:
+	./mppdec           "$(TEST4)" $(TEST11)
+	../decorig/mppdec "$(TEST4)" $(TEST12)
+	./wavcmp $(TEST11) $(TEST12) | $(LESS)
+	$(RM_F) $(TEST11) $(TEST12)
+
+
+testd2:
+	@./mppdec          "$(TEST9)" $(TEST11)
+	@../decorig/mppdec "$(TEST9)" $(TEST12)
+	@./wavcmp $(TEST11) $(TEST12) | $(LESS)
+	@$(RM_F) $(TEST11) $(TEST12)
+
+
+testd3:
+	@./mppdec          "$(TEST4)" $(TEST11)
+	@../decorig/mppdec "$(TEST4)" $(TEST12)
+	@./wavcmp $(TEST11) $(TEST12) > $(TMPFILE)
+	@$(RM_F) $(TEST11) $(TEST12)
+	@./mppdec          "$(TEST3)" $(TEST11)
+	@../decorig/mppdec "$(TEST3)" $(TEST12)
+	@./wavcmp $(TEST11) $(TEST12) >> $(TMPFILE)
+	@$(RM_F) $(TEST11) $(TEST12)
+	@./mppdec          "$(TEST2)" $(TEST11)
+	@../decorig/mppdec "$(TEST2)" $(TEST12)
+	@./wavcmp $(TEST11) $(TEST12) >> $(TMPFILE)
+	@$(RM_F) $(TEST11) $(TEST12)
+	@./mppdec          "$(TEST1)" $(TEST11)
+	@../decorig/mppdec "$(TEST1)" $(TEST12)
+	@./wavcmp $(TEST11) $(TEST12) >> $(TMPFILE)
+	@$(RM_F) $(TEST11) $(TEST12)
+	@$(LESS) $(TMPFILE)
+	@$(RM_F) $(TMPFILE)
+
+
+testd4:
+	@./mppdec          "$(TEST1)" $(TEST11)
+	@../decorig/mppdec "$(TEST1)" $(TEST12)
+	@./wavcmp $(TEST11) $(TEST12) >> $(TMPFILE)
+	@$(RM_F) $(TEST11) $(TEST12)
+
+
+speede1:
+	@-$(RM_F) $(TEST7) $(TEST8)
+	@$(LPAC) -x $(TEST5) $(TEST6)
+	@$(CAT) $(TEST6) > $(DEVNULL)
+	@./$(MPPENC_TARGET) $(TEST6) $(TEST7)
+	@$(CAT) $(TEST6) > $(DEVNULL)
+	@../encorig/mppenc $(TEST6) $(TEST8)
+
+
+speede2:
+	@-$(RM_F) $(TEST7) $(TEST8)
+	@$(CAT) $(TEST6) ./$(MPPENC_TARGET) > $(DEVNULL)
+	@$(NICE) ./$(MPPENC_TARGET) $(TEST6) $(TEST7)
+	@$(CAT) $(TEST6) > $(DEVNULL)
+	@../encorig/mppenc $(TEST6) $(TEST8)
+
+
+#################################################################################################################
+#
+# Backup of important files
+
+backup:
+	@make clean
+	@$(ZIP) -r ../codec_$(DATE).zip ./* -x $(BACKUP_EXCL)
+
+
+#################################################################################################################
+#
+# Installing all binary files
+
+install:
+#	@make
+#	@-mount -o remount,rw /usr &> $(DEVNULL)
+#	@-$(CP_F)                    {mppdec,mppdec16,mppdec24,mppdec32,mppenc}{,-static,-diet} $(DESTDIR)/usr/bin
+#	@-$(CHOWN)  0.0 $(DESTDIR)/usr/bin/{mppdec,mppdec16,mppdec24,mppdec32,mppenc}{,-static,-diet}
+#	@-$(CHMOD) 4755 $(DESTDIR)/usr/bin/{mppdec,mppdec16,mppdec24,mppdec32,mppenc}{,-static,-diet}
+#	@-$(CP_F)                      replaygain                                                 /usr/local/bin
+	install -m 0755 -D mppdec $(DESTDIR)/usr/bin/mppdec
+	install -m 0755 -D mppenc $(DESTDIR)/usr/bin/mppenc-presv8
+
+
+installv:
+	@make clean mppdec mppenc
+	@-mount -o remount,rw /usr &> $(DEVNULL)
+	@-$(CP_F)                      mppenc /usr/local/bin/mppenc-${MPPENC_VERSION}
+	@-$(CP_F)                      mppdec /usr/local/bin/mppdec
+	@-mount -o remount,ro /usr &> $(DEVNULL)
+
+filter:
+	@make mppenc 2>&1 | grep -v "as .float. rather than .double. due to prototype" | grep -v '/usr/'
+
+
+websrc:
+	@chmod 755 Remove.tab
+	@./Remove.tab -v {.,*,*/*,*/*/*,*/*/*/*}/*.{c,cpp,h,inc,nas,txt,htm,html}
+	@make mrproper
+	@$(RM_F) website/src/{mppdec,mppenc,winamp,xmms}-*.{tar.gz,tar.bz2,tar.Z,zip,pgp}
+	@-$(MKDIR) mppdec-${MPPDEC_VERSION} mppenc-${MPPENC_VERSION} winamp-${WINAMP_VERSION} xmms-${XMMS_VERSION}
+	@$(CP_F) $(MPPDEC_PACKAGE) mppdec-${MPPDEC_VERSION}
+	@$(CP_F) $(MPPENC_PACKAGE) mppenc-${MPPENC_VERSION}
+	@$(CP_F) $(WINAMP_PACKAGE) winamp-${WINAMP_VERSION}
+	@$(CP_F) $(XMMS_PACKAGE)   xmms-${XMMS_VERSION}
+	@-$(CHOWN) -R nobody.nogroup mppdec-${MPPDEC_VERSION} mppenc-${MPPENC_VERSION} winamp-${WINAMP_VERSION} xmms-${XMMS_VERSION}
+	@$(TAR) cf - mppdec-${MPPDEC_VERSION} | bzip2 -9 > website/src/mppdec-${MPPDEC_VERSION}.tar.bz2
+	@$(TAR) cf - mppenc-${MPPENC_VERSION} | bzip2 -9 > website/src/mppenc-${MPPENC_VERSION}.tar.bz2
+	@$(TAR) cf - winamp-${WINAMP_VERSION} | bzip2 -9 > website/src/winamp-${WINAMP_VERSION}.tar.bz2
+	@$(TAR) cf - xmms-${XMMS_VERSION}     | bzip2 -9 > website/src/xmms-${XMMS_VERSION}.tar.bz2
+	@$(RM_RF) mppdec-${MPPDEC_VERSION} mppenc-${MPPENC_VERSION} winamp-${WINAMP_VERSION} xmms-${XMMS_VERSION}
+	@$(PGP) -e website/src/mppenc-${MPPENC_VERSION}.tar.bz2 MPEGplus
+	@$(CHMOD) 644 website/src/*
+
+
+zip:
+	@make websrc
+	@/usr/local/bin/gz website/src/mpp*.tar.bz2
+	@-mdel z:mpp??c*.tar.gz
+	@-mcopy website/src/mpp??c*.tar.gz z:
+	@-mdel a:mpp??c*.tar.gz
+	@-mcopy website/src/mpp??c*.tar.gz a:
+
+
+send:
+	@make websrc
+	@make onlysendsource
+
+
+onlysendsource:
+	@echo Sending Sources ...
+	@$(ENCODE) website/src/mppdec-${MPPDEC_VERSION}.tar.bz2 website/src/mppdec-${MPPDEC_VERSION}-$(DATE).tar.bz2     | $(MAIL) -s "Source Decoder (${MPPDEC_VERSION}) ($(DATE))" $(BROADCAST_MPPDEC)
+	@$(ENCODE) website/src/mppenc-${MPPENC_VERSION}.tar.bz2 website/src/mppenc-${MPPENC_VERSION}-$(DATE).tar.bz2.pgp | $(MAIL) -s "Source Encoder (${MPPENC_VERSION}) ($(DATE))" $(BROADCAST_MPPENC)
+	@$(ENCODE) website/src/winamp-${WINAMP_VERSION}.tar.bz2 website/src/winamp-${WINAMP_VERSION}-$(DATE).tar.bz2     | $(MAIL) -s "Source WinAmp  (${WINAMP_VERSION}) ($(DATE))" $(BROADCAST_MPPDEC)
+	@$(ENCODE) website/src/xmms-${XMMS_VERSION}.tar.bz2     website/src/xmms-${XMMS_VERSION}-$(DATE).tar.bz2         | $(MAIL) -s "Source XMMS    (${XMMS_VERSION}) ($(DATE))" $(BROADCAST_MPPDEC)
+	@echo -e 'Bei Modifikationen bitte einsenden:\n\n\tQuelle (Zeitstempel der Mail: '$(DATE)')\n\tModifikationen bestimmt mit »diff -abBU5 alteDatei neueDatei«\n\nFrank Klemm (pfk@fuchs.offl.uni-jena.de)\n ' | $(MAIL) -s "Hinweis" $(BROADCAST)
+
+
+onlysendbinary:
+	@make
+	@$(BZIP2) < mppdec-static | $(ENCODE) mppdec-${MPPDEC_VERSION}-linux-IA32-libc6-static.bz2 | $(MAIL) -s "Programm D" $(BROADCAST)
+	@$(BZIP2) < mppenc-static | $(ENCODE) mppenc-${MPPENC_VERSION}-linux-IA32-libc6-static.bz2 | $(MAIL) -s "Programm E" $(BROADCAST)
+
+
+#################################################################################################################
+#
+#
+
+linux:
+	@USE_GCC272=yes make
+
+
+linstall: linux
+	@$(CP_F) $(MPPDEC_TARGET) ~/bin1/mppdec_pp
+	@$(CP_F) $(MPPENC_TARGET) ~/bin1/mppenc_pp
+	@$(CP_F) $(REPLAY_TARGET) ~/bin1/replaygain_pp
+
+
+solaris:
+	@USE_GCC272=yes _SUNOS=yes make
+
+
+sinstall: solaris
+	@$(CP_F) $(MPPDEC_TARGET) ~/bin/mppdec_pp
+	@$(CP_F) $(MPPENC_TARGET) ~/bin/mppenc_pp
+	@$(CP_F) $(REPLAY_TARGET) ~/bin/replaygain_pp
+
+
+######### end of Makefile ###################################################################################
