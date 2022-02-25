@@ -57,7 +57,9 @@
 // use realtime scheduling if destination is an audio device
 // This sets the program to real time priority when playing the file directly to a sound card.
 // Now it should really difficult to get drop outs (file IO and other realtime programs are the remaining weak points)
+#if !defined(__APPLE__) && !defined(__MACH__)
 #define USE_REALTIME
+#endif
 
 // use ANSI-Escape sequences to structure output
 #define USE_ANSI_ESCAPE
